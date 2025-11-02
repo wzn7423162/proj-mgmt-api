@@ -1,0 +1,43 @@
+server:
+  port: 8890
+  servlet:
+    context-path: /
+  # 在响应中包含错误消息（仅用于调试，生产可关闭）
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: projmgmt-ucenter
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/proj_mgmt?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: Ning7423162
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  type-aliases-package: com.projmgmt.ucenter.domain
+  # 控制台打印 SQL，便于排查
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+token:
+  header: Authorization
+  secret: cHJvam1nbXQtc2VjcmV0LWtleS0yMDI1
+  expireTime: 480
+
+logging:
+  level:
+    root: info
+    com.projmgmt: debug
+    org.springframework.web: info
+  file:
+    name: logs/ucenter.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+
+
