@@ -113,6 +113,9 @@ public class MachineController {
             }
         }
 
+        // 更新项目的机台数量统计
+        updateProjectMachineCount(body.getProjectId());
+
         Map<String, Object> data = new HashMap<>();
         data.put("created", created);
         if (!failed.isEmpty()) {
@@ -133,8 +136,19 @@ public class MachineController {
 
     @DeleteMapping("/delete")
     public AjaxResult delete(@RequestParam Long id) {
+        // 先获取机台信息，以便知道所属项目
+        Machine machine = machineMapper.selectById(id);
+        if (machine == null) {
+            return AjaxResult.error("机台不存在");
+        }
+
         int c = machineMapper.deleteById(id);
-        return c > 0 ? AjaxResult.success() : AjaxResult.error("删除失败");
+        if (c > 0) {
+            // 更新项目的机台数量统计
+            updateProjectMachineCount(machine.getProjectId());
+            return AjaxResult.success();
+        }
+        return AjaxResult.error("删除失败");
     }
 
     private void applyTimeRange(LambdaQueryWrapper<Machine> qw, String start, String end) {
@@ -150,6 +164,28 @@ public class MachineController {
                 LocalDateTime e = LocalDateTime.parse(end, fmt);
                 qw.le(Machine::getImportTime, e);
             } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * 更新项目的机台数量统计
+     */
+    private void updateProjectMachineCount(Long projectId) {
+        if (projectId == null) {
+            return;
+        }
+        // 统计该项目下有效的机台数量（未删除的）
+        LambdaQueryWrapper<Machine> countQw = new LambdaQueryWrapper<>();
+        countQw.eq(Machine::getProjectId, projectId);
+        countQw.eq(Machine::getDelFlag, "0");
+        long count = machineMapper.selectCount(countQw);
+
+        // 更新项目表的 machineCount 字段
+        Project project = projectMapper.selectById(String.valueOf(projectId));
+        if (project != null) {
+            project.setMachineCount((int) count);
+            project.setUpdateTime(LocalDateTime.now());
+            projectMapper.updateById(project);
         }
     }
 }
